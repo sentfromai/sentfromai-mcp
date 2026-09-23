@@ -33,5 +33,19 @@
         }
       ]
     }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.sentfrom.ai/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <SentFromAI API key (sf_live_…) from https://console.sentfrom.ai>",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
   ]
 }

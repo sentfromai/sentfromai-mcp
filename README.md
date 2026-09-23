@@ -89,6 +89,18 @@ openclaw skills install git:sentfromai/sentfromai-mcp
 
 Full guide: [docs.sentfrom.ai/frameworks/openclaw](https://docs.sentfrom.ai/frameworks/openclaw).
 
+## Hosted endpoint (no install)
+
+The same 21 tools are served over Streamable HTTP at `https://api.sentfrom.ai/mcp` for
+hosts that only speak remote MCP (claude.ai connectors, ChatGPT apps, Meta Muse, Cursor
+remote servers, MCP Inspector). Authenticate with `Authorization: Bearer sf_live_…`
+(an `x-api-key` header also works), or let OAuth-capable hosts sign you in: the
+endpoint publishes RFC 9728 resource metadata pointing at SentFromAI's authorization server.
+
+```bash
+claude mcp add --transport http sentfromai https://api.sentfrom.ai/mcp --header "Authorization: Bearer sf_live_…"
+```
+
 ## Tools
 
 | Area | Tools | Annotation |
