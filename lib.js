@@ -464,11 +464,13 @@ export function createServer({ apiKey, baseUrl = DEFAULT_BASE_URL, fetchImpl }) 
       const result = await callTool(api, name, req.params.arguments ?? {})
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
     } catch (err) {
-      // API failures come back as tool results (not protocol errors) so the model
-      // can read the status and self-correct — a 401 means the key is wrong, a
-      // 402 means the plan limit is reached, a 4xx body says what to fix.
-      if (err instanceof ApiError) return { isError: true, content: [{ type: 'text', text: err.message }] }
-      throw err
+      // Failures come back as tool results (not protocol errors) so the model can
+      // read them and self-correct: a 401 means the key is wrong, a 402 means the
+      // plan limit is reached, a 4xx body says what to fix, and a network error
+      // names the unreachable host. Only an unknown tool name is a protocol error.
+      if (err instanceof Error && err.message.startsWith('unknown tool:')) throw err
+      const text = err instanceof ApiError ? err.message : `sentfromai: ${err instanceof Error ? (err.cause instanceof Error ? `${err.message} (${err.cause.message})` : err.message) : String(err)}`
+      return { isError: true, content: [{ type: 'text', text }] }
     }
   })
 
