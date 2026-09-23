@@ -1,0 +1,21 @@
+{
+  "name": "sentfromai",
+  "owner": { "name": "SentFromAI", "url": "https://sentfrom.ai" },
+  "metadata": {
+    "description": "SentFromAI plugins for Claude Code and Cowork: email infrastructure for AI agents.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "sentfromai",
+      "source": "./",
+      "description": "Email for AI agents. Gives Claude its own inbox: send, reply in-thread, search, and manage senders. 21 MCP tools over the SentFromAI API.",
+      "version": "0.4.0",
+      "author": { "name": "SentFromAI", "url": "https://sentfrom.ai" },
+      "homepage": "https://docs.sentfrom.ai/guides/mcp",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": ["email", "inbox", "mcp", "agents", "sentfromai"]
+    }
+  ]
+}

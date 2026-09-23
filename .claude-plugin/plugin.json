@@ -1,0 +1,21 @@
+{
+  "name": "sentfromai",
+  "displayName": "SentFromAI",
+  "version": "0.4.0",
+  "description": "Email for AI agents. Gives Claude its own inbox: create inboxes, send, reply in-thread, forward, search, manage drafts, domains, webhooks and allow/block rules. 21 MCP tools over the SentFromAI API.",
+  "author": { "name": "SentFromAI", "url": "https://sentfrom.ai" },
+  "homepage": "https://docs.sentfrom.ai/guides/mcp",
+  "repository": "https://github.com/sentfromai/sentfromai-mcp",
+  "license": "MIT",
+  "keywords": ["email", "inbox", "mcp", "agents", "sentfromai", "communication"],
+  "mcpServers": "./mcp-config.json",
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "SentFromAI API key",
+      "description": "Starts with sf_live_. Create one at https://console.sentfrom.ai under API keys (free plan: 5 inboxes, 5,000 emails/month, no card).",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "sentfromai",
+  "version": "0.4.0",
+  "description": "Email for AI agents. Gives Gemini its own inbox: create inboxes, send, reply in-thread, forward, search, manage drafts, domains, webhooks and allow/block rules. 21 MCP tools over the SentFromAI API.",
+  "mcpServers": {
+    "sentfromai": {
+      "command": "npx",
+      "args": ["-y", "sentfromai-mcp"],
+      "env": { "SENTFROMAI_API_KEY": "${SENTFROMAI_API_KEY}" }
+    }
+  },
+  "contextFileName": "GEMINI.md",
+  "settings": [
+    {
+      "name": "SentFromAI API key",
+      "description": "Starts with sf_live_. Create one at https://console.sentfrom.ai under API keys (free plan: 5 inboxes, 5,000 emails/month, no card).",
+      "envVar": "SENTFROMAI_API_KEY",
+      "sensitive": true
+    }
+  ]
+}

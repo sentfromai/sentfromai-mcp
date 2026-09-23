@@ -1,25 +1,25 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "ai.sentfrom/mcp",
-  "description": "Email for AI agents: inboxes, send/reply/forward, search, threads, webhooks \u2014 21 SentFromAI tools.",
+  "description": "Email for AI agents: inboxes, send/reply/forward, search, threads, webhooks — 21 SentFromAI tools.",
   "repository": {
-    "url": "https://github.com/samuelar2/sentfromai-mcp",
+    "url": "https://github.com/sentfromai/sentfromai-mcp",
     "source": "github"
   },
   "websiteUrl": "https://docs.sentfrom.ai/guides/mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "sentfromai-mcp",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "SENTFROMAI_API_KEY",
-          "description": "SentFromAI API key (sf_live_\u2026) from https://console.sentfrom.ai",
+          "description": "SentFromAI API key (sf_live_…) from https://console.sentfrom.ai",
           "isRequired": true,
           "format": "string",
           "isSecret": true

@@ -1,14 +1,20 @@
 {
   "name": "sentfromai-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "mcpName": "ai.sentfrom/mcp",
-  "description": "MCP server for SentFromAI \u2014 email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
+  "description": "MCP server for SentFromAI — email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
   "type": "module",
+  "main": "./lib.js",
+  "exports": {
+    ".": "./lib.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "sentfromai-mcp": "server.js"
   },
   "files": [
     "server.js",
+    "lib.js",
     "README.md"
   ],
   "keywords": [
@@ -24,15 +30,20 @@
     "openclaw",
     "inbox",
     "smtp",
-    "transactional-email"
+    "transactional-email",
+    "claude-code",
+    "claude-plugin",
+    "gemini-cli",
+    "cursor",
+    "agent-email"
   ],
   "homepage": "https://docs.sentfrom.ai/guides/mcp",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/samuelar2/sentfromai-mcp.git"
+    "url": "git+https://github.com/sentfromai/sentfromai-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/samuelar2/sentfromai-mcp/issues"
+    "url": "https://github.com/sentfromai/sentfromai-mcp/issues"
   },
   "license": "MIT",
   "dependencies": {
