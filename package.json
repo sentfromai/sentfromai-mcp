@@ -5,6 +5,7 @@
   "description": "MCP server for SentFromAI — email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
   "type": "module",
   "main": "./lib.js",
+  "types": "./lib.d.ts",
   "exports": {
     ".": "./lib.js",
     "./package.json": "./package.json"
@@ -15,6 +16,7 @@
   "files": [
     "server.js",
     "lib.js",
+    "lib.d.ts",
     "README.md"
   ],
   "keywords": [

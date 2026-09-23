@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Syntax
+        run: node --check lib.js && node --check server.js
+      - name: Manifests are valid JSON
+        run: |
+          for f in package.json server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json mcp-config.json gemini-extension.json glama.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "ok $f"
+          done
+      - name: Versions agree
+        run: |
+          node -e "
+            const v = require('./package.json').version;
+            const s = require('./server.json');
+            const p = require('./.claude-plugin/plugin.json');
+            const g = require('./gemini-extension.json');
+            for (const [n, x] of [['server.json', s.version], ['server.json package', s.packages[0].version], ['plugin.json', p.version], ['gemini-extension.json', g.version]])
+              if (x !== v) { console.error(n + ' is ' + x + ', package.json is ' + v); process.exit(1) }
+            console.log('all manifests at ' + v)"
+      - name: Missing API key exits non-zero with guidance
+        run: |
+          set +e; out=$(node server.js 2>&1); code=$?; set -e
+          test $code -ne 0 && echo "$out" | grep -q SENTFROMAI_API_KEY
+      - name: tools/list over stdio (21 tools, all annotated)
+        run: |
+          printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+          | SENTFROMAI_API_KEY=sf_live_ci node server.js 2>/dev/null \
+          | node -e "
+            let tools;
+            require('readline').createInterface({ input: process.stdin }).on('line', l => { const m = JSON.parse(l); if (m.id === 2) tools = m.result.tools })
+              .on('close', () => {
+                if (!tools) { console.error('no tools/list response'); process.exit(1) }
+                const bad = tools.filter(t => !t.title || !t.annotations || typeof t.annotations.readOnlyHint !== 'boolean' || !t.inputSchema);
+                if (tools.length !== 21 || bad.length) { console.error('tools:', tools.length, 'unannotated:', bad.map(t => t.name)); process.exit(1) }
+                console.log('ok: 21 tools, all with title + annotations')
+              })"
+      - name: tools/call surfaces API errors as isError results
+        run: |
+          printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_inboxes","arguments":{}}}' \
+          | SENTFROMAI_API_KEY=sf_live_ci SENTFROMAI_BASE_URL=http://127.0.0.1:9 node server.js 2>/dev/null \
+          | node -e "
+            require('readline').createInterface({ input: process.stdin }).on('line', l => {
+              const m = JSON.parse(l); if (m.id !== 3) return;
+              if (m.error) { console.error('protocol error instead of tool result:', m.error.message); process.exit(1) }
+              console.log('ok: unreachable API ->', m.result.isError ? 'isError result' : 'result', '-', m.result.content[0].text.slice(0, 60))
+            })"

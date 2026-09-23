@@ -39,49 +39,70 @@ export const TOOLS = [
   tool(
     'create_inbox',
     'Create inbox',
-    'Create a new email inbox. Defaults to the managed mail.sentfrom.ai domain.',
+    'Create an email inbox for this tenant and return it (id, address, display_name, created_at). Uses the managed mail.sentfrom.ai domain unless domain_id names one of your verified custom domains. The address is live immediately. Errors: 400 invalid local_part, 402 plan inbox limit reached, 409 address already taken.',
     {
       type: 'object',
       properties: {
-        local_part: { type: 'string', description: 'The part before @ (e.g. "support" or a user hash).' },
-        display_name: { type: 'string', description: 'Optional display name shown in the From header.' },
+        local_part: {
+          type: 'string',
+          description: 'Part before the @, e.g. "support" or "agent-42". Only a-z, 0-9, dot, underscore and hyphen; normalised to lowercase. Must be unique on the domain.',
+        },
+        display_name: { type: 'string', description: 'Optional display name shown in the From header, e.g. "Acme Support".' },
+        domain_id: {
+          type: 'string',
+          description: 'Optional id of a verified custom domain (from add_domain / get_domain). Omit to use mail.sentfrom.ai.',
+        },
       },
       required: ['local_part'],
     },
     WRITE,
   ),
-  tool('list_inboxes', 'List inboxes', 'List all inboxes for this tenant.', NO_ARGS, READ),
+  tool(
+    'list_inboxes',
+    'List inboxes',
+    'List every inbox in this tenant (id, address, display_name, created_at). Call this before create_inbox to reuse an existing address.',
+    NO_ARGS,
+    READ,
+  ),
   tool(
     'delete_inbox',
     'Delete inbox',
-    'Delete an inbox. Mail to its address stops being accepted.',
-    { type: 'object', properties: { inbox_id: { type: 'string' } }, required: ['inbox_id'] },
+    'Permanently delete an inbox. Its address stops accepting mail immediately; messages already received stay searchable. Cannot be undone. Errors: 404 unknown inbox.',
+    {
+      type: 'object',
+      properties: { inbox_id: { type: 'string', description: 'Id of the inbox to delete (from list_inboxes).' } },
+      required: ['inbox_id'],
+    },
     DELETE,
   ),
   // ── Messages ─────────────────────────────────────────────────────────────
   tool(
     'send_message',
     'Send email',
-    'Send a new email from one of your inboxes.',
+    'Send a new email from one of your inboxes and return the created message (id, thread_id, delivery_status). Starts a new thread; to continue a conversation use reply_to_message so threading headers are set. Recipients matching a block rule are refused and addresses that previously bounced are suppressed. Pass client_id to make retries idempotent. Errors: 400 missing fields, 402 plan send limit reached, 413 message over 10 MB, 422 all recipients blocked or suppressed.',
     {
       type: 'object',
       properties: {
-        inbox_id: { type: 'string', description: 'The sending inbox id.' },
-        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses.' },
-        cc: { type: 'array', items: { type: 'string' } },
-        bcc: { type: 'array', items: { type: 'string' } },
-        subject: { type: 'string' },
-        text: { type: 'string', description: 'Plain-text body.' },
-        html: { type: 'string', description: 'Optional HTML body.' },
+        inbox_id: { type: 'string', description: 'Id of the sending inbox (from list_inboxes).' },
+        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses; at least one.' },
+        cc: { type: 'array', items: { type: 'string' }, description: 'Optional CC addresses.' },
+        bcc: { type: 'array', items: { type: 'string' }, description: 'Optional BCC addresses (not visible to other recipients).' },
+        subject: { type: 'string', description: 'Subject line.' },
+        text: { type: 'string', description: 'Plain-text body. Provide text, html, or both.' },
+        html: { type: 'string', description: 'Optional HTML body. text is used as the plain-text alternative.' },
+        client_id: {
+          type: 'string',
+          description: 'Optional idempotency key you choose (e.g. a UUID). Resending with the same client_id returns the original message instead of sending again.',
+        },
         attachments: {
           type: 'array',
-          description: 'Optional file attachments.',
+          description: 'Optional file attachments. The whole message must stay under 10 MB once encoded.',
           items: {
             type: 'object',
             properties: {
-              filename: { type: 'string' },
-              content_type: { type: 'string' },
-              content_base64: { type: 'string', description: 'Base64-encoded file content.' },
+              filename: { type: 'string', description: 'File name shown to the recipient, e.g. "report.pdf".' },
+              content_type: { type: 'string', description: 'MIME type, e.g. "application/pdf". Inferred from filename when omitted.' },
+              content_base64: { type: 'string', description: 'File bytes, base64-encoded.' },
             },
             required: ['content_base64'],
           },
@@ -94,13 +115,27 @@ export const TOOLS = [
   tool(
     'reply_to_message',
     'Reply to email',
-    'Reply to a message, staying in its thread (sets In-Reply-To/References automatically).',
+    'Reply inside an existing thread and return the created message. Sent from the inbox that received the original, to the original sender (or to everyone on the thread with reply_all), with the subject and In-Reply-To/References headers set so mail clients thread it correctly. Block rules and suppression apply. Errors: 404 unknown message, 402 plan send limit reached.',
     {
       type: 'object',
       properties: {
-        message_id: { type: 'string', description: 'The id of the message to reply to.' },
-        text: { type: 'string' },
-        html: { type: 'string' },
+        message_id: { type: 'string', description: 'Id of the message to reply to (from search_messages, get_thread or a webhook event).' },
+        text: { type: 'string', description: 'Plain-text body of the reply.' },
+        html: { type: 'string', description: 'Optional HTML body of the reply.' },
+        reply_all: { type: 'boolean', description: 'Reply to every original recipient (To and CC) instead of only the sender. Default false.' },
+        attachments: {
+          type: 'array',
+          description: 'Optional file attachments, same shape as send_message.',
+          items: {
+            type: 'object',
+            properties: {
+              filename: { type: 'string', description: 'File name shown to the recipient.' },
+              content_type: { type: 'string', description: 'MIME type; inferred from filename when omitted.' },
+              content_base64: { type: 'string', description: 'File bytes, base64-encoded.' },
+            },
+            required: ['content_base64'],
+          },
+        },
       },
       required: ['message_id'],
     },
@@ -109,14 +144,18 @@ export const TOOLS = [
   tool(
     'forward_message',
     'Forward email',
-    'Forward a message to new recipients in a fresh thread, quoting the original and re-attaching its files.',
+    'Forward a message to new recipients as a fresh thread, quoting the original and re-attaching its files, and return the created message. Useful for handing a conversation to a human. Errors: 404 unknown message, 402 plan send limit reached.',
     {
       type: 'object',
       properties: {
-        message_id: { type: 'string', description: 'The id of the message to forward.' },
-        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses.' },
+        message_id: { type: 'string', description: 'Id of the message to forward.' },
+        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses; at least one.' },
         text: { type: 'string', description: 'Optional note placed above the quoted original.' },
-        from_inbox_id: { type: 'string', description: 'Optional: send from a different inbox than the one that received the original.' },
+        from_inbox_id: {
+          type: 'string',
+          description: 'Optional inbox to send from. Defaults to the inbox that received the original.',
+        },
+        client_id: { type: 'string', description: 'Optional idempotency key; a repeat with the same client_id does not forward twice.' },
       },
       required: ['message_id', 'to'],
     },
@@ -125,21 +164,25 @@ export const TOOLS = [
   tool(
     'get_message',
     'Get message',
-    'Fetch a single message by id, including body and attachment links.',
-    { type: 'object', properties: { message_id: { type: 'string' } }, required: ['message_id'] },
+    'Fetch one message by id: from/to/cc, subject, plain-text and HTML bodies, direction, delivery_status, thread_id, timestamps, and time-limited download URLs for attachments. Errors: 404 unknown message.',
+    {
+      type: 'object',
+      properties: { message_id: { type: 'string', description: 'Id of the message (from search_messages, list_threads/get_thread or a webhook event).' } },
+      required: ['message_id'],
+    },
     READ,
   ),
   tool(
     'search_messages',
     'Search messages',
-    'Search messages across the tenant. mode: keyword (default), semantic (by meaning), or hybrid. No query returns recent messages.',
+    'Search this tenant\'s messages, or list the most recent ones when query is omitted (the way to check for new mail). Returns up to limit message summaries (id, thread_id, direction, from_addr, to_addrs, subject, sent_at/received_at), newest first; use get_message for bodies. mode keyword matches words in subject and body, semantic finds messages by meaning, hybrid combines both.',
     {
       type: 'object',
       properties: {
-        query: { type: 'string' },
-        mode: { type: 'string', enum: ['keyword', 'semantic', 'hybrid'], description: 'Search mode.' },
-        inbox_id: { type: 'string', description: 'Optional: restrict to one inbox.' },
-        limit: { type: 'number' },
+        query: { type: 'string', description: 'Search text. Omit to list the most recent messages.' },
+        mode: { type: 'string', enum: ['keyword', 'semantic', 'hybrid'], description: 'Search mode. Default keyword.' },
+        inbox_id: { type: 'string', description: 'Optional: restrict results to one inbox.' },
+        limit: { type: 'number', description: 'Maximum results, 1-100. Default 25.' },
       },
     },
     READ,
@@ -148,12 +191,12 @@ export const TOOLS = [
   tool(
     'list_threads',
     'List threads',
-    'List conversation threads, most recently active first.',
+    'List conversation threads, most recently active first: id, subject, participants, message_count, last_message_at. Use get_thread to read the messages of one thread.',
     {
       type: 'object',
       properties: {
-        inbox_id: { type: 'string', description: 'Optional: restrict to one inbox.' },
-        limit: { type: 'number', description: 'Max threads to return (default 25, max 100).' },
+        inbox_id: { type: 'string', description: 'Optional: restrict to threads involving one inbox.' },
+        limit: { type: 'number', description: 'Maximum threads to return, 1-100. Default 25.' },
       },
     },
     READ,
@@ -161,25 +204,34 @@ export const TOOLS = [
   tool(
     'get_thread',
     'Get thread',
-    'Fetch a thread and all its messages in order.',
-    { type: 'object', properties: { thread_id: { type: 'string' } }, required: ['thread_id'] },
+    'Fetch a thread with all of its messages in chronological order, bodies included. Errors: 404 unknown thread.',
+    {
+      type: 'object',
+      properties: { thread_id: { type: 'string', description: 'Thread id (from list_threads or a message\'s thread_id).' } },
+      required: ['thread_id'],
+    },
     READ,
   ),
   // ── Drafts ───────────────────────────────────────────────────────────────
   tool(
     'create_draft',
     'Create draft',
-    'Create a draft (optionally scheduled, optionally a reply). Does not send.',
+    'Create a draft without sending it and return it (id, status draft or scheduled). Set scheduled_at to have it sent automatically at that time, or send it later with send_draft. With reply_to_message_id the draft becomes a threaded reply: recipients and subject default to the original message. Errors: 404 unknown inbox or message.',
     {
       type: 'object',
       properties: {
-        inbox_id: { type: 'string' },
-        to: { type: 'array', items: { type: 'string' } },
-        subject: { type: 'string' },
-        text: { type: 'string' },
-        html: { type: 'string' },
-        reply_to_message_id: { type: 'string', description: 'Make this draft a reply to a message.' },
-        scheduled_at: { type: 'string', description: 'ISO timestamp to auto-send at.' },
+        inbox_id: { type: 'string', description: 'Inbox the draft will be sent from.' },
+        to: { type: 'array', items: { type: 'string' }, description: 'Recipients. Optional for replies (defaults to the original sender).' },
+        cc: { type: 'array', items: { type: 'string' }, description: 'Optional CC addresses.' },
+        bcc: { type: 'array', items: { type: 'string' }, description: 'Optional BCC addresses.' },
+        subject: { type: 'string', description: 'Subject. Optional for replies (defaults to "Re: <original subject>").' },
+        text: { type: 'string', description: 'Plain-text body.' },
+        html: { type: 'string', description: 'Optional HTML body.' },
+        reply_to_message_id: { type: 'string', description: 'Id of a message this draft replies to; sets threading headers when sent.' },
+        scheduled_at: {
+          type: 'string',
+          description: 'ISO 8601 timestamp in UTC, e.g. "2026-10-01T09:00:00Z". SentFromAI sends the draft automatically at this time.',
+        },
       },
       required: ['inbox_id'],
     },
@@ -188,71 +240,120 @@ export const TOOLS = [
   tool(
     'send_draft',
     'Send draft',
-    'Send an existing draft immediately.',
-    { type: 'object', properties: { draft_id: { type: 'string' } }, required: ['draft_id'] },
+    'Send an existing draft now and return the resulting message. Works for drafts in status draft or scheduled; a draft that was already sent cannot be sent again. Errors: 404 unknown draft, 409 already sent.',
+    {
+      type: 'object',
+      properties: { draft_id: { type: 'string', description: 'Id of the draft (from create_draft or list_drafts).' } },
+      required: ['draft_id'],
+    },
     SEND,
   ),
-  tool('list_drafts', 'List drafts', 'List drafts for this tenant.', NO_ARGS, READ),
+  tool(
+    'list_drafts',
+    'List drafts',
+    'List this tenant\'s drafts: id, inbox_id, to, subject, status (draft, scheduled, sent) and scheduled_at.',
+    NO_ARGS,
+    READ,
+  ),
   // ── Domains ──────────────────────────────────────────────────────────────
   tool(
     'add_domain',
     'Add sending domain',
-    'Add a custom sending domain. Returns the DNS records to add to your DNS; verification is automatic once they propagate.',
-    { type: 'object', properties: { hostname: { type: 'string' } }, required: ['hostname'] },
+    'Register a custom domain for sending and receiving and return it (id, status pending) together with the DNS records to add: DKIM CNAMEs, MX and SPF for the mail-from subdomain, and DMARC. SentFromAI re-checks DNS automatically and marks the domain verified once the records propagate; poll with get_domain. Errors: 400 invalid hostname, 409 already registered.',
+    {
+      type: 'object',
+      properties: { hostname: { type: 'string', description: 'Domain or subdomain you control, e.g. "mail.example.com".' } },
+      required: ['hostname'],
+    },
     WRITE,
   ),
   tool(
     'get_domain',
     'Get domain status',
-    'Get a domain’s verification status and required DNS records.',
-    { type: 'object', properties: { domain_id: { type: 'string' } }, required: ['domain_id'] },
+    'Get a domain\'s verification status (pending, verified, failed), the DKIM, SPF and DMARC check results, and the exact DNS records still required. Errors: 404 unknown domain.',
+    {
+      type: 'object',
+      properties: { domain_id: { type: 'string', description: 'Id of the domain (from add_domain).' } },
+      required: ['domain_id'],
+    },
     READ,
   ),
   // ── Webhooks ─────────────────────────────────────────────────────────────
   tool(
     'create_webhook',
     'Create webhook',
-    'Register a webhook endpoint for delivery events. The signing secret is returned once on creation — store it.',
+    'Register an HTTPS endpoint that receives events as signed JSON POSTs and return it with its signing secret, which is shown only this once. Events: message.received (inbound mail, the default), message.delivered, message.bounced, message.complained, message.rejected. Failed deliveries are retried with backoff.',
     {
       type: 'object',
       properties: {
-        url: { type: 'string', description: 'HTTPS endpoint to receive events.' },
-        events: { type: 'array', items: { type: 'string' }, description: 'Event types (default ["message.received"]).' },
+        url: { type: 'string', description: 'HTTPS URL that will receive the POSTed events.' },
+        events: {
+          type: 'array',
+          items: { type: 'string', enum: ['message.received', 'message.delivered', 'message.bounced', 'message.complained', 'message.rejected'] },
+          description: 'Event types to subscribe to. Default ["message.received"].',
+        },
       },
       required: ['url'],
     },
     WRITE,
   ),
-  tool('list_webhooks', 'List webhooks', 'List webhook endpoints (signing secrets omitted).', NO_ARGS, READ),
+  tool(
+    'list_webhooks',
+    'List webhooks',
+    'List webhook endpoints: id, url, events, created_at. Signing secrets are never returned after creation.',
+    NO_ARGS,
+    READ,
+  ),
   tool(
     'delete_webhook',
     'Delete webhook',
-    'Delete a webhook endpoint.',
-    { type: 'object', properties: { webhook_id: { type: 'string' } }, required: ['webhook_id'] },
+    'Delete a webhook endpoint. Event deliveries to it stop immediately. Cannot be undone. Errors: 404 unknown endpoint.',
+    {
+      type: 'object',
+      properties: { webhook_id: { type: 'string', description: 'Id of the endpoint (from create_webhook or list_webhooks).' } },
+      required: ['webhook_id'],
+    },
     DELETE,
   ),
   // ── Allow/block lists ────────────────────────────────────────────────────
   tool(
     'add_address_rule',
     'Add allow/block rule',
-    'Add an allow or block rule for an email address or bare domain. Block rules are enforced on both send and receive.',
+    'Add a rule for an email address or a whole domain and return it (id, kind, direction, pattern). Block rules are enforced server-side for every inbox in the tenant: matching senders are refused on receive and matching recipients are refused on send. Allow rules are recorded for reference and are not enforced as exceptions. Errors: 400 invalid kind or pattern.',
     {
       type: 'object',
       properties: {
-        kind: { type: 'string', enum: ['allow', 'block'] },
-        pattern: { type: 'string', description: 'Email address or bare domain (e.g. "spam.example").' },
-        direction: { type: 'string', enum: ['inbound', 'outbound', 'both'], description: 'Default: both.' },
+        kind: { type: 'string', enum: ['allow', 'block'], description: 'block to refuse mail matching the pattern; allow to record an allow-listed address.' },
+        pattern: {
+          type: 'string',
+          description: 'Full email address ("someone@example.com") or bare domain ("example.com", which matches every address at that domain). Case-insensitive.',
+        },
+        direction: {
+          type: 'string',
+          enum: ['inbound', 'outbound', 'both'],
+          description: 'Where the rule applies: inbound (receiving), outbound (sending) or both. Default both.',
+        },
       },
       required: ['kind', 'pattern'],
     },
     WRITE,
   ),
-  tool('list_address_rules', 'List allow/block rules', 'List allow/block rules for this tenant.', NO_ARGS, READ),
+  tool(
+    'list_address_rules',
+    'List allow/block rules',
+    'List this tenant\'s allow/block rules: id, kind, direction, pattern, created_at.',
+    NO_ARGS,
+    READ,
+  ),
   tool(
     'delete_address_rule',
     'Delete allow/block rule',
-    'Delete an allow/block rule.',
-    { type: 'object', properties: { rule_id: { type: 'string' } }, required: ['rule_id'] },
+    'Delete an allow/block rule by id. Takes effect immediately. Cannot be undone. Errors: 404 unknown rule.',
+    {
+      type: 'object',
+      properties: { rule_id: { type: 'string', description: 'Id of the rule (from add_address_rule or list_address_rules).' } },
+      required: ['rule_id'],
+    },
     DELETE,
   ),
 ]
@@ -293,7 +394,7 @@ const query = (pairs) => {
 export async function callTool(api, name, a = {}) {
   switch (name) {
     case 'create_inbox':
-      return api('POST', '/inboxes', { local_part: a.local_part, display_name: a.display_name })
+      return api('POST', '/inboxes', { local_part: a.local_part, display_name: a.display_name, domain_id: a.domain_id })
     case 'list_inboxes':
       return api('GET', '/inboxes')
     case 'delete_inbox':
@@ -301,12 +402,16 @@ export async function callTool(api, name, a = {}) {
     case 'send_message':
       return api('POST', '/messages', {
         inbox_id: a.inbox_id, to: a.to, cc: a.cc, bcc: a.bcc,
-        subject: a.subject, text: a.text, html: a.html, attachments: a.attachments,
+        subject: a.subject, text: a.text, html: a.html, attachments: a.attachments, client_id: a.client_id,
       })
     case 'reply_to_message':
-      return api('POST', `/messages/${a.message_id}/reply`, { text: a.text, html: a.html })
+      return api('POST', `/messages/${a.message_id}/reply`, {
+        text: a.text, html: a.html, reply_all: a.reply_all, attachments: a.attachments,
+      })
     case 'forward_message':
-      return api('POST', `/messages/${a.message_id}/forward`, { to: a.to, text: a.text, from_inbox_id: a.from_inbox_id })
+      return api('POST', `/messages/${a.message_id}/forward`, {
+        to: a.to, text: a.text, from_inbox_id: a.from_inbox_id, client_id: a.client_id,
+      })
     case 'get_message':
       return api('GET', `/messages/${a.message_id}`)
     case 'search_messages':
@@ -317,7 +422,7 @@ export async function callTool(api, name, a = {}) {
       return api('GET', `/threads/${a.thread_id}`)
     case 'create_draft':
       return api('POST', '/drafts', {
-        inbox_id: a.inbox_id, to: a.to, subject: a.subject, text: a.text, html: a.html,
+        inbox_id: a.inbox_id, to: a.to, cc: a.cc, bcc: a.bcc, subject: a.subject, text: a.text, html: a.html,
         reply_to_message_id: a.reply_to_message_id, scheduled_at: a.scheduled_at,
       })
     case 'send_draft':
