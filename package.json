@@ -1,6 +1,6 @@
 {
   "name": "sentfromai-mcp",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "mcpName": "ai.sentfrom/mcp",
   "description": "MCP server for SentFromAI — email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
   "type": "module",

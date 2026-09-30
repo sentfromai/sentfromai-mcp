@@ -1,6 +1,6 @@
 {
   "name": "sentfromai",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Email for AI agents. Gives Gemini its own inbox: create inboxes, send, reply in-thread, forward, search, manage drafts, domains, webhooks and allow/block rules. 21 MCP tools over the SentFromAI API.",
   "mcpServers": {
     "sentfromai": {

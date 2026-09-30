@@ -368,12 +368,20 @@ export class ApiError extends Error {
   }
 }
 
-export function createApi({ apiKey, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch }) {
+// Every request names this package and, when the MCP server set them, the tool
+// being run and the agent host (Claude Code, Cursor...), so the API can tell
+// which tools agents use. No arguments or content are sent this way.
+export function createApi({ apiKey, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, headers = {} }) {
   const root = baseUrl.replace(/\/$/, '')
   return async function api(method, path, body) {
     const res = await fetchImpl(`${root}/v1${path}`, {
       method,
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+      headers: {
+        'user-agent': `sentfromai-mcp/${VERSION}`,
+        ...headers,
+        'content-type': 'application/json',
+        authorization: `Bearer ${apiKey}`,
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     const text = await res.text()
@@ -453,13 +461,22 @@ export async function callTool(api, name, a = {}) {
 // Build an MCP Server bound to one tenant credential. The caller attaches a
 // transport (stdio locally, Streamable HTTP when hosted).
 export function createServer({ apiKey, baseUrl = DEFAULT_BASE_URL, fetchImpl }) {
-  const api = createApi({ apiKey, baseUrl, fetchImpl })
   const server = new Server({ name: 'sentfromai', version: VERSION }, { capabilities: { tools: {} } })
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }))
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name } = req.params
+    const host = server.getClientVersion()
+    const api = createApi({
+      apiKey,
+      baseUrl,
+      fetchImpl,
+      headers: {
+        'x-sentfromai-mcp-tool': name,
+        ...(host?.name ? { 'x-sentfromai-mcp-client': `${host.name}/${host.version ?? ''}`.slice(0, 100) } : {}),
+      },
+    })
     try {
       const result = await callTool(api, name, req.params.arguments ?? {})
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }

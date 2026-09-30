@@ -35,7 +35,12 @@ export interface ClientOptions {
   fetchImpl?: typeof fetch
 }
 
-export declare function createApi(options: ClientOptions): Api
+export interface ApiOptions extends ClientOptions {
+  /** Extra request headers (the MCP server names the tool and host this way). */
+  headers?: Record<string, string>
+}
+
+export declare function createApi(options: ApiOptions): Api
 export declare function callTool(api: Api, name: string, args?: Record<string, unknown>): Promise<unknown>
 /** An MCP Server exposing the 21 SentFromAI tools, bound to one credential. Attach your own transport. */
 export declare function createServer(options: ClientOptions): Server
