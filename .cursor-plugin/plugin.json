@@ -1,0 +1,30 @@
+{
+  "name": "sentfromai",
+  "displayName": "SentFromAI",
+  "version": "0.4.1",
+  "description": "Email for AI agents. Gives your agent its own inbox: create inboxes, send, reply in-thread, forward, search, manage drafts, domains, webhooks and allow/block rules. 21 annotated tools over SentFromAI's hosted MCP server, plus an email-etiquette skill.",
+  "author": {
+    "name": "SentFromAI",
+    "email": "support@sentfrom.ai"
+  },
+  "homepage": "https://docs.sentfrom.ai/guides/mcp",
+  "repository": "https://github.com/sentfromai/sentfromai-mcp",
+  "license": "MIT",
+  "logo": "assets/logo.png",
+  "keywords": ["email", "inbox", "mcp", "agents", "sentfromai", "communication"],
+  "category": "Inbox And Collaboration",
+  "tags": ["email", "inbox", "mcp"],
+  "variables": {
+    "type": "object",
+    "properties": {
+      "SENTFROMAI_API_KEY": {
+        "type": "string",
+        "title": "SentFromAI API key",
+        "description": "Starts with sf_live_. Create one at https://console.sentfrom.ai under API keys (free plan: 5 inboxes, 5,000 emails/month, no card). Sent as a Bearer token."
+      }
+    },
+    "required": ["SENTFROMAI_API_KEY"]
+  },
+  "mcpServers": "./mcp.json",
+  "skills": "./skills/"
+}

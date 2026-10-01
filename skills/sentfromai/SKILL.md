@@ -1,6 +1,6 @@
 ---
 name: sentfromai
-description: Send, receive, search and reply to real email through SentFromAI. Use when the user wants Claude to have its own email address, email someone, check an inbox for replies, forward something, or block a sender. Also covers fixing a missing or invalid SentFromAI API key.
+description: Send, receive, search and reply to real email through SentFromAI. Use when the user wants you to have your own email address, email someone, check an inbox for replies, forward something, or block a sender. Also covers fixing a missing or invalid SentFromAI API key.
 ---
 
 # SentFromAI email
@@ -43,10 +43,11 @@ address such as `claw@mail.sentfrom.ai` is live immediately; keep its `id` for s
 
 ## If the tools are missing or return 401
 
-The plugin runs `npx -y sentfromai-mcp` with the API key entered when the plugin was
-enabled. Ask the user to create or copy a key at https://console.sentfrom.ai (API keys
-page; keys start with `sf_live_`), then re-enter it via `/plugin` (configure the
-sentfromai plugin) and restart the session. Alternative without the plugin:
+The plugin uses the API key entered when it was installed. Ask the user to create or
+copy a key at https://console.sentfrom.ai (API keys page; keys start with `sf_live_`),
+then re-enter it: in Claude Code via `/plugin` (configure the sentfromai plugin) and
+restart the session; in Cursor or Grok Bot under Plugins, SentFromAI, Configure.
+Alternative without the plugin:
 
 ```bash
 claude mcp add sentfromai --env SENTFROMAI_API_KEY=sf_live_… -- npx -y sentfromai-mcp

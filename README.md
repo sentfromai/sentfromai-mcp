@@ -60,6 +60,13 @@ claude mcp add sentfromai --env SENTFROMAI_API_KEY=sf_live_… -- npx -y sentfro
 Cursor one-click (then paste your key into the generated config):
 [![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](cursor://anysphere.cursor-deeplink/mcp/install?name=sentfromai&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInNlbnRmcm9tYWktbWNwIl0sImVudiI6eyJTRU5URlJPTUFJX0FQSV9LRVkiOiJzZl9saXZlX+KApiJ9fQ==)
 
+### Cursor and Grok Bot (plugin)
+
+Install **SentFromAI** from the Cursor Marketplace; Grok Bot lists the same plugin under
+Settings, Plugins. It connects to the hosted endpoint and asks for your API key on install.
+To try it before it is listed, copy this repo into `~/.cursor/plugins/local/sentfromai`
+and reload Cursor.
+
 ### VS Code
 
 ```bash

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sentfromai": {
+      "type": "http",
+      "url": "https://api.sentfrom.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SENTFROMAI_API_KEY}"
+      },
+      "placement": "server"
+    }
+  }
+}
