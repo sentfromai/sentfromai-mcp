@@ -13,7 +13,7 @@
     "api_key": {
       "type": "string",
       "title": "SentFromAI API key",
-      "description": "Starts with sf_live_. Create one at https://console.sentfrom.ai under API keys (free plan: 5 inboxes, 5,000 emails/month, no card).",
+      "description": "Use your saved sf_live_ API key. With no key, first follow https://docs.sentfrom.ai/agent-install.md to bootstrap through REST when enabled, or create a key in the console. MCP needs this key; human claim enables sending without changing it.",
       "sensitive": true,
       "required": true
     }

@@ -14,17 +14,33 @@ allow/block rules — 21 tools, each a thin wrapper over the
 carries MCP annotations (read-only / write / send / delete) so hosts can group them
 and confirm the irreversible ones.
 
-You need a SentFromAI API key (`sf_live_…`) from the [console](https://console.sentfrom.ai).
-Free plan: 5 inboxes, 5,000 emails/month, no card.
+Use an existing SentFromAI API key (`sf_live_…`), or follow the
+[agent setup guide](https://docs.sentfrom.ai/agent-install.md) to bootstrap an
+inbox through REST when agent signup is enabled. New agent accounts can receive
+and read before their human claims them; sending and other changes require that
+claim. The console remains available for human signup.
 
 ## Let your agent install it
 
 Paste this into your agent (Claude Code, OpenClaw, Gemini CLI, any MCP-capable agent):
 
 ```text
-Set up SentFromAI email for yourself: fetch https://docs.sentfrom.ai/agent-install.md
-and follow it. Ask me for the API key when you need it.
+Set up email for yourself: https://docs.sentfrom.ai/agent-install.md
 ```
+
+Bootstrap uses `POST /v1/agent-signups`, not an MCP tool: MCP requires the key
+returned by signup. Save a random `Idempotency-Key` before the request and reuse
+it with the same body for retries within the replay window. Save the response
+privately; give its `claim_url` only to your operator in your existing chat.
+`GET /v1/account` reports current capabilities; `POST /v1/account/claim-link`
+refreshes a link with the original API key. Claiming preserves the inbox and key.
+
+Use your host's protected credential configuration. Never put a real key in
+chat, shell commands, source control or logs. Configure `SENTFROMAI_API_KEY` in
+the stdio server environment privately before starting it; examples below show
+placeholders only. For hosted MCP, configure its Bearer header privately.
+This onboarding flow needs the matching API and console rollout; the package
+itself does not create accounts or bypass account limits.
 
 ## Install
 
@@ -40,7 +56,7 @@ claude plugin install sentfromai@sentfromai
 Or as a plain MCP server:
 
 ```bash
-claude mcp add sentfromai --env SENTFROMAI_API_KEY=sf_live_… -- npx -y sentfromai-mcp
+claude mcp add sentfromai -- npx -y sentfromai-mcp
 ```
 
 ### Claude Desktop, Cursor, Windsurf, Cline, any JSON-config host
@@ -69,9 +85,8 @@ and reload Cursor.
 
 ### VS Code
 
-```bash
-code --add-mcp '{"name":"sentfromai","command":"npx","args":["-y","sentfromai-mcp"],"env":{"SENTFROMAI_API_KEY":"sf_live_…"}}'
-```
+Add `npx -y sentfromai-mcp` through VS Code's MCP configuration and enter
+`SENTFROMAI_API_KEY` in a protected input.
 
 ### Gemini CLI
 
@@ -84,13 +99,13 @@ Gemini asks for the API key on install and keeps it in your keychain.
 ### Codex CLI
 
 ```bash
-codex mcp add sentfromai --env SENTFROMAI_API_KEY=sf_live_… -- npx -y sentfromai-mcp
+codex mcp add sentfromai -- npx -y sentfromai-mcp
 ```
 
 ### OpenClaw
 
 ```bash
-openclaw mcp add sentfromai --command npx --arg -y --arg sentfromai-mcp --env SENTFROMAI_API_KEY=sf_live_…
+openclaw mcp add sentfromai --command npx --arg -y --arg sentfromai-mcp
 openclaw skills install git:sentfromai/sentfromai-mcp
 ```
 
@@ -105,7 +120,7 @@ remote servers, MCP Inspector). Authenticate with `Authorization: Bearer sf_live
 endpoint publishes RFC 9728 resource metadata pointing at SentFromAI's authorization server.
 
 ```bash
-claude mcp add --transport http sentfromai https://api.sentfrom.ai/mcp --header "Authorization: Bearer sf_live_…"
+claude mcp add --transport http sentfromai https://api.sentfrom.ai/mcp
 ```
 
 ## Tools
