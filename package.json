@@ -1,6 +1,6 @@
 {
   "name": "sentfromai-mcp",
-  "version": "0.4.1",
+  "version": "0.5.0-beta.1",
   "mcpName": "ai.sentfrom/mcp",
   "description": "MCP server for SentFromAI — email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
   "type": "module",
@@ -17,7 +17,11 @@
     "server.js",
     "lib.js",
     "lib.d.ts",
-    "README.md"
+    "README.md",
+    "identity-server.js",
+    "mcp-with-identity.json",
+    "skills",
+    "LICENSE"
   ],
   "keywords": [
     "mcp",
@@ -49,9 +53,28 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0"
+    "@modelcontextprotocol/sdk": "^1.32.1"
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "peerDependencies": {
+    "@agentlogin/mcp": "0.2.0-beta.1"
+  },
+  "peerDependenciesMeta": {
+    "@agentlogin/mcp": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "release:prepare": "node scripts/release.mjs prepare",
+    "release:verify": "node scripts/release.mjs verify"
+  },
+  "x-sentfromai-host-version": "0.4.1"
 }

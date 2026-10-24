@@ -84,7 +84,7 @@ copy a key at https://console.sentfrom.ai (API keys page; keys start with `sf_li
 then re-enter it: in Claude Code via `/plugin` (configure the sentfromai plugin) and
 restart the session; in Cursor or Grok Bot under Plugins, SentFromAI, Configure.
 For a local server, configure `SENTFROMAI_API_KEY` through protected host
-configuration and launch `npx -y sentfromai-mcp`.
+configuration and launch `npx -y sentfromai-mcp@0.4.1`.
 
 ## Without MCP (REST fallback)
 

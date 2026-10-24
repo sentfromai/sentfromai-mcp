@@ -11,9 +11,20 @@
   "repository": "https://github.com/sentfromai/sentfromai-mcp",
   "license": "MIT",
   "logo": "assets/logo.png",
-  "keywords": ["email", "inbox", "mcp", "agents", "sentfromai", "communication"],
+  "keywords": [
+    "email",
+    "inbox",
+    "mcp",
+    "agents",
+    "sentfromai",
+    "communication"
+  ],
   "category": "Inbox And Collaboration",
-  "tags": ["email", "inbox", "mcp"],
+  "tags": [
+    "email",
+    "inbox",
+    "mcp"
+  ],
   "variables": {
     "type": "object",
     "properties": {
@@ -23,7 +34,9 @@
         "description": "Use your saved sf_live_ API key. With no key, first follow https://docs.sentfrom.ai/agent-install.md to bootstrap through REST when enabled, or create a key in the console. MCP needs this key; human claim enables sending without changing it. Sent as a Bearer token."
       }
     },
-    "required": ["SENTFROMAI_API_KEY"]
+    "required": [
+      "SENTFROMAI_API_KEY"
+    ]
   },
   "mcpServers": "./mcp.json",
   "skills": "./skills/"

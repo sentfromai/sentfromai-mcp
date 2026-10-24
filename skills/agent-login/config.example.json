@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "stateDirectory": "/absolute/private/sentfrom-agent-login",
+  "identities": {
+    "sentfrom": {
+      "handle": "your-agent@mail.sentfrom.ai",
+      "issuer": "https://identity.sentfrom.ai",
+      "ownerPortal": "https://identity.sentfrom.ai/identity",
+      "ownerApprovalPath": "/identity/transactions/{transaction_id}",
+      "enrollmentEndpoint": "https://identity.sentfrom.ai/identity/enrollment-requests",
+      "enrollmentCredentialEnv": "SENTFROMAI_API_KEY"
+    }
+  },
+  "applications": {
+    "workspace": {
+      "name": "SentFrom Agent Workspace",
+      "origin": "https://workspace.sentfrom.ai",
+      "loginPath": "/auth/agent/login",
+      "sessionCheck": {
+        "path": "/me",
+        "handlePointer": "/handle",
+        "issuerPointer": "/iss",
+        "subjectPointer": "/sub"
+      },
+      "logoutPath": "/logout",
+      "operations": {
+        "list_notes": {
+          "description": "Read this agent's notes; pass next_cursor as before for the next page",
+          "method": "GET",
+          "path": "/notes",
+          "queryFields": ["before"],
+          "output": { "notes": "/notes", "next_cursor": "/next_cursor" }
+        },
+        "save_note": {
+          "description": "Save a private note with a unique ID retained for an explicit retry",
+          "method": "POST",
+          "path": "/notes",
+          "inputFields": ["id", "text"],
+          "output": { "saved": "/saved", "note": "/note" }
+        }
+      }
+    }
+  }
+}

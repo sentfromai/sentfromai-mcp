@@ -19,6 +19,8 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
+      - name: Mail compatibility and release safety regressions
+        run: npm test
       - name: Syntax
         run: node --check lib.js && node --check server.js
       - name: Manifests are valid JSON
@@ -26,10 +28,10 @@ jobs:
           for f in package.json server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .cursor-plugin/plugin.json mcp.json mcp-config.json gemini-extension.json glama.json; do
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "ok $f"
           done
-      - name: Versions agree
+      - name: Stable host versions agree
         run: |
           node -e "
-            const v = require('./package.json').version;
+            const v = require('./package.json')['x-sentfromai-host-version'];
             const s = require('./server.json');
             const p = require('./.claude-plugin/plugin.json');
             const g = require('./gemini-extension.json');
