@@ -1,0 +1,100 @@
+name: Prepare or publish npm beta
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact committed beta version
+        required: true
+        type: string
+      commit:
+        description: Full reviewed commit SHA at main HEAD when dispatching
+        required: true
+        type: string
+      publish:
+        description: Publish the tested artifact to beta
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-beta-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'sentfromai/sentfromai-mcp' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22.23.4'
+          package-manager-cache: false
+      - name: Match version and provenance to workflow source
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          assert.match(process.env.RELEASE_COMMIT, /^[0-9a-f]{40}$/);
+          assert.equal(process.env.RELEASE_COMMIT, process.env.GITHUB_SHA);
+          assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim(), process.env.RELEASE_COMMIT);
+          assert.equal(JSON.parse(readFileSync('package.json')).version, process.env.RELEASE_VERSION);
+          execFileSync('git', ['merge-base', '--is-ancestor', process.env.RELEASE_COMMIT, 'origin/main']);
+          NODE
+      - run: npm install --global npm@12.2.1 --ignore-scripts --registry=https://registry.npmjs.org/
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=low
+      - name: Verify upstream releases, package, and test fresh consumers
+        run: |
+          node scripts/release.mjs prepare "$RUNNER_TEMP/npm-beta"
+          node scripts/release.mjs verify "$RUNNER_TEMP/npm-beta"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-beta
+          path: ${{ runner.temp }}/npm-beta/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: prepare
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm-beta
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22.23.4'
+          package-manager-cache: false
+      - run: npm install --global npm@12.2.1 --ignore-scripts --registry=https://registry.npmjs.org/
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-beta
+          path: ${{ runner.temp }}/npm-beta
+      - name: Publish only verified beta bytes with OIDC
+        run: node scripts/release.mjs publish "$RUNNER_TEMP/npm-beta"

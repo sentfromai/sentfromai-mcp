@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "sentfromai": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server.js"],
+      "env": { "SENTFROMAI_API_KEY": "${user_config.api_key}" }
+    },
+    "agentlogin": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/identity-server.js"],
+      "env": {
+        "AGENTLOGIN_MCP_CONFIG": "${user_config.identity_config}",
+        "SENTFROMAI_API_KEY": "${user_config.api_key}"
+      }
+    }
+  }
+}

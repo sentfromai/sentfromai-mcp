@@ -3,11 +3,21 @@
   "displayName": "SentFromAI",
   "version": "0.4.1",
   "description": "Email for AI agents. Gives Claude its own inbox: create inboxes, send, reply in-thread, forward, search, manage drafts, domains, webhooks and allow/block rules. 21 MCP tools over the SentFromAI API.",
-  "author": { "name": "SentFromAI", "url": "https://sentfrom.ai" },
+  "author": {
+    "name": "SentFromAI",
+    "url": "https://sentfrom.ai"
+  },
   "homepage": "https://docs.sentfrom.ai/guides/mcp",
   "repository": "https://github.com/sentfromai/sentfromai-mcp",
   "license": "MIT",
-  "keywords": ["email", "inbox", "mcp", "agents", "sentfromai", "communication"],
+  "keywords": [
+    "email",
+    "inbox",
+    "mcp",
+    "agents",
+    "sentfromai",
+    "communication"
+  ],
   "mcpServers": "./mcp-config.json",
   "userConfig": {
     "api_key": {
@@ -16,6 +26,12 @@
       "description": "Use your saved sf_live_ API key. With no key, first follow https://docs.sentfrom.ai/agent-install.md to bootstrap through REST when enabled, or create a key in the console. MCP needs this key; human claim enables sending without changing it.",
       "sensitive": true,
       "required": true
+    },
+    "identity_config": {
+      "type": "string",
+      "title": "Optional Agent Login config path",
+      "description": "Absolute path to the private local Agent Login companion config. Enable mcp-with-identity.json after installing the companion. API credentials stay in protected environment configuration.",
+      "required": false
     }
   }
 }

@@ -5,8 +5,13 @@
   "mcpServers": {
     "sentfromai": {
       "command": "npx",
-      "args": ["-y", "sentfromai-mcp"],
-      "env": { "SENTFROMAI_API_KEY": "${SENTFROMAI_API_KEY}" }
+      "args": [
+        "-y",
+        "sentfromai-mcp@0.4.1"
+      ],
+      "env": {
+        "SENTFROMAI_API_KEY": "${SENTFROMAI_API_KEY}"
+      }
     }
   },
   "contextFileName": "GEMINI.md",
