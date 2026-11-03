@@ -14,7 +14,7 @@ test('host release versions agree and default configurations remain mail-only', 
   assert.equal(VERSION, pkg.version)
   const hostVersion = pkg['x-sentfromai-host-version']
   assert.equal(hostVersion, '0.4.1')
-  assert.equal(pkg.peerDependencies['@agentlogin/mcp'], '0.2.0-beta.1')
+  assert.equal(pkg.peerDependencies['@agentlogin/mcp'], '0.2.0-beta.2')
   assert.equal(pkg.peerDependenciesMeta['@agentlogin/mcp'].optional, true)
   for (const file of ['server.json', '.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', 'gemini-extension.json']) assert.equal(read(file).version, hostVersion)
   assert.equal(read('server.json').packages[0].version, hostVersion)

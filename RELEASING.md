@@ -1,7 +1,7 @@
 # SentFrom MCP beta release
 
-`sentfromai-mcp@0.5.0-beta.1` keeps the 21 mail tools as its default. Agent Login is
-an explicit optional companion, pinned to `@agentlogin/mcp@0.2.0-beta.1`; enabling
+`sentfromai-mcp@0.5.0-beta.2` keeps the 21 mail tools as its default. Agent Login is
+an explicit optional companion, pinned to `@agentlogin/mcp@0.2.0-beta.2`; enabling
 it adds a separate local server. Existing hosted mail configurations remain mail-only.
 
 The monorepo's `packages/mcp` contains the reviewed application code. This public
@@ -57,7 +57,7 @@ allowing direct publication. The existing package can use its own trusted publis
 it does not inherit the reference repository's publishing permissions.
 
 1. Merge reviewed source to `main`, record its full SHA, and tag that same commit
-   `v0.5.0-beta.1`. Never move an existing release tag.
+   `v0.5.0-beta.2`. Never move an existing release tag.
 2. Dispatch **Prepare or publish npm beta** from `main` while that SHA is still its
    HEAD. Set the exact version and SHA. `publish=false` only prepares and archives;
    `publish=true` runs the separate publication job after all checks pass.
