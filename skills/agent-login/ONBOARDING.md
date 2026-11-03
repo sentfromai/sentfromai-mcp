@@ -4,8 +4,8 @@ This guide is for an invited human and their agent. Email access, Owner approval
 and application access are separate permissions. The Owner completes device
 prompts and approves access personally; an agent never activates a human factor.
 
-The launch candidate is `sentfromai-mcp@0.5.0-beta.1` with
-`agentlogin@0.2.0-beta.1` and `@agentlogin/mcp@0.2.0-beta.1`. Until the release
+The launch candidate is `sentfromai-mcp@0.5.0-beta.2` with
+`agentlogin@0.2.0-beta.2` and `@agentlogin/mcp@0.2.0-beta.2`. Until the release
 operator confirms those exact versions are public, use the checked release
 artifacts. A successful local package test is not evidence of publication.
 

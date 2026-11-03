@@ -1,6 +1,6 @@
 {
   "name": "sentfromai-mcp",
-  "version": "0.5.0-beta.1",
+  "version": "0.5.0-beta.2",
   "mcpName": "ai.sentfrom/mcp",
   "description": "MCP server for SentFromAI — email infrastructure for AI agents. Create inboxes, send and reply, search, manage threads, webhooks and allow/block rules as native agent tools.",
   "type": "module",
@@ -59,7 +59,7 @@
     "node": ">=20"
   },
   "peerDependencies": {
-    "@agentlogin/mcp": "0.2.0-beta.1"
+    "@agentlogin/mcp": "0.2.0-beta.2"
   },
   "peerDependenciesMeta": {
     "@agentlogin/mcp": {

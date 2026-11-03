@@ -1,6 +1,6 @@
 # sentfromai-mcp
 
-This branch prepares `0.5.0-beta.1`. Use its pinned install commands only after the
+This branch prepares `0.5.0-beta.2`. Use its pinned install commands only after the
 release operator confirms publication; a source checkout is not a published release.
 Existing marketplace, Gemini, Cursor and server-directory defaults remain on the
 stable mail release. The beta companion is enabled explicitly through the local
@@ -193,19 +193,19 @@ authenticated application operations and logout using the open Agent Login SDK.
 It targets the working draft; it is not a claim that the hosted service is already
 deployed or certified.
 
-The planned beta uses `agentlogin@0.2.0-beta.1`, `@agentlogin/mcp@0.2.0-beta.1`
-and `sentfromai-mcp@0.5.0-beta.1`. These versions are release candidates until the
+The planned beta uses `agentlogin@0.2.0-beta.2`, `@agentlogin/mcp@0.2.0-beta.2`
+and `sentfromai-mcp@0.5.0-beta.2`. These versions are release candidates until the
 release operator confirms publication. Before publication, install the matching
 reviewed tarballs supplied by that operator:
 
 ```sh
-npm install --save-exact /absolute/artifacts/agentlogin-0.2.0-beta.1.tgz /absolute/artifacts/agentlogin-mcp-0.2.0-beta.1.tgz /absolute/artifacts/sentfromai-mcp-0.5.0-beta.1.tgz
+npm install --save-exact /absolute/artifacts/agentlogin-0.2.0-beta.2.tgz /absolute/artifacts/agentlogin-mcp-0.2.0-beta.2.tgz /absolute/artifacts/sentfromai-mcp-0.5.0-beta.2.tgz
 ```
 
 After those exact versions are confirmed public, a registry installation is:
 
 ```sh
-npm install --save-exact agentlogin@0.2.0-beta.1 @agentlogin/mcp@0.2.0-beta.1 sentfromai-mcp@0.5.0-beta.1
+npm install --save-exact agentlogin@0.2.0-beta.2 @agentlogin/mcp@0.2.0-beta.2 sentfromai-mcp@0.5.0-beta.2
 ```
 
 Use a maintained Node.js release satisfying the companion's Node.js 22.13 minimum.
@@ -221,7 +221,7 @@ identity service origin and `ownerApprovalPath` to
 explicitly; a provider catalog does not authorize application access.
 
 For a Git-cloned Claude plugin, install the exact companion in that checkout with
-`npm install --no-save @agentlogin/mcp@0.2.0-beta.1` after its publication; installing
+`npm install --no-save @agentlogin/mcp@0.2.0-beta.2` after its publication; installing
 it in an unrelated project does not make it available to this wrapper. For other
 hosts, use both packages from the same npm installation directory.
 
