@@ -16,7 +16,7 @@ test('host release versions agree and default configurations remain mail-only', 
   assert.equal(hostVersion, '0.4.1')
   assert.equal(pkg.peerDependencies['@agentlogin/mcp'], '0.2.0-beta.2')
   assert.equal(pkg.peerDependenciesMeta['@agentlogin/mcp'].optional, true)
-  for (const file of ['server.json', '.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', 'gemini-extension.json']) assert.equal(read(file).version, hostVersion)
+  for (const file of ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', 'gemini-extension.json']) assert.equal(read(file).version, hostVersion)
   assert.equal(read('server.json').packages[0].version, hostVersion)
   const stable = read('.claude-plugin/marketplace.json').plugins[0]
   assert.equal(stable.version, hostVersion)
@@ -26,6 +26,23 @@ test('host release versions agree and default configurations remain mail-only', 
   assert.equal(read('.claude-plugin/plugin.json').userConfig.identity_config.required, false)
   assert.ok(read('mcp-config.json').mcpServers.sentfromai.args.includes(`sentfromai-mcp@${hostVersion}`))
   assert.ok(read('gemini-extension.json').mcpServers.sentfromai.args.includes(`sentfromai-mcp@${hostVersion}`))
+})
+
+test('registry metadata revision preserves the existing identity, stable package and private authentication', () => {
+  const server = read('server.json')
+  assert.equal(server.name, pkg.mcpName)
+  assert.equal(server.name, 'ai.sentfrom/mcp')
+  assert.equal(server.version, '0.4.2')
+  assert.equal(server.title, 'SentFromAI Email MCP')
+  assert.equal(server.packages[0].identifier, pkg.name)
+  assert.equal(server.packages[0].version, pkg['x-sentfromai-host-version'])
+  assert.deepEqual(server.icons, [{ src: 'https://raw.githubusercontent.com/sentfromai/sentfromai-mcp/main/assets/logo.png', mimeType: 'image/png', sizes: ['512x512'] }])
+  const remote = server.remotes[0]
+  assert.equal(remote.url, 'https://api.sentfrom.ai/mcp')
+  assert.equal(remote.type, 'streamable-http')
+  assert.deepEqual(remote.headers.map(header => [header.name, header.isRequired, header.isSecret]), [['Authorization', true, true]])
+  assert.equal(remote.headers[0].value, undefined, 'Published metadata must never contain an access credential')
+  assert.equal(server.packages[0].environmentVariables.find(variable => variable.name === 'SENTFROMAI_API_KEY').isSecret, true)
 })
 
 test('real mail stdio handshake exposes only the 21 annotated mail tools and reports API failure', async () => {

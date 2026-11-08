@@ -28,7 +28,7 @@ jobs:
           for f in package.json server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .cursor-plugin/plugin.json mcp.json mcp-config.json gemini-extension.json glama.json; do
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "ok $f"
           done
-      - name: Stable host versions agree
+      - name: Stable installation versions agree
         run: |
           node -e "
             const v = require('./package.json')['x-sentfromai-host-version'];
@@ -36,9 +36,9 @@ jobs:
             const p = require('./.claude-plugin/plugin.json');
             const g = require('./gemini-extension.json');
             const c = require('./.cursor-plugin/plugin.json');
-            for (const [n, x] of [['server.json', s.version], ['server.json package', s.packages[0].version], ['plugin.json', p.version], ['gemini-extension.json', g.version], ['.cursor-plugin/plugin.json', c.version]])
+            for (const [n, x] of [['server.json package', s.packages[0].version], ['plugin.json', p.version], ['gemini-extension.json', g.version], ['.cursor-plugin/plugin.json', c.version]])
               if (x !== v) { console.error(n + ' is ' + x + ', package.json is ' + v); process.exit(1) }
-            console.log('all manifests at ' + v)"
+            console.log('stable installations at ' + v + '; registry metadata revision ' + s.version)"
       - name: Missing API key exits non-zero with guidance
         run: |
           set +e; out=$(node server.js 2>&1); code=$?; set -e

@@ -129,6 +129,33 @@ endpoint publishes RFC 9728 resource metadata pointing at SentFromAI's authoriza
 claude mcp add --transport http sentfromai https://api.sentfrom.ai/mcp
 ```
 
+### Directory metadata and health checks
+
+The registry identity is **`ai.sentfrom/mcp`**, displayed as **SentFromAI Email MCP**.
+`server.json` revision `0.4.2` updates the directory title and icon while continuing
+to reference the stable `sentfromai-mcp@0.4.1` package and the same hosted URL.
+It does not promote the optional identity beta. Registry metadata is immutable
+after publication, so this revision must be published under the existing identity
+before directories can import it; merging the file alone does not update a listing.
+
+The hosted MCP endpoint requires authentication for initialization and tool
+discovery. An unauthenticated `POST /mcp` returns `401`; `GET /mcp` returns `405`
+because this stateless server uses JSON-RPC POST requests. A successful
+`GET /health` is application liveness, not an authenticated MCP health check.
+
+For the [existing Glama connector](https://glama.ai/mcp/connectors/ai.sentfrom/mcp),
+claim the listing and configure **Admin → Test Profile** with **API Key** authentication,
+the `Authorization` header, and a dedicated test account's Bearer credential in
+the private credential field. Use an isolated account without customer data or
+billable access. Never put its credential in this repository, registry metadata,
+a public listing field, an issue, or a support message. OAuth remains available
+for user connections; a monitor's private test profile is separate from them.
+
+Glama's [documented health checks](https://glama.ai/mcp/faq#how-do-i-submit-an-mcp-connector)
+initialize the connection and discover metadata without calling tools. This
+server advertises the `tools` capability and 21 mail tools; it does not advertise
+prompts or resources. Monitors should respect those advertised capabilities.
+
 ## Tools
 
 | Area | Tools | Annotation |
