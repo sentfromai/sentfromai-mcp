@@ -19,7 +19,10 @@ Reconcile an uncertain or failed result using the same saved request instead of
 creating a replacement identity or deleting its key.
 
 Give an `awaiting_owner` approval link only to the real operator in the trusted
-conversation. The operator signs in with their independent human authentication
+conversation, together with the configured handle and full public `fingerprint`
+returned by the helper. A `starting` result may not contain it yet; wait for status
+instead of opening private key files. This is the agent-key fingerprint, not the
+human passkey fingerprint. The operator signs in with their independent human authentication
 and approves the named agent and public key. Never retrieve an approval code
 through the agent's mailbox, impersonate the human, or recover their human factor.
 
