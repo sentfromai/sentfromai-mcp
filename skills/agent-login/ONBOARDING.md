@@ -4,8 +4,8 @@ This guide is for an invited human and their agent. Email access, Owner approval
 and application access are separate permissions. The Owner completes device
 prompts and approves access personally; an agent never activates a human factor.
 
-The launch candidate is `sentfromai-mcp@0.5.0-beta.2` with
-`agentlogin@0.2.0-beta.2` and `@agentlogin/mcp@0.2.0-beta.2`. Until the release
+The launch candidate is `sentfromai-mcp@0.5.0-beta.3` with
+`agentlogin@0.2.0-beta.4` and `@agentlogin/mcp@0.2.0-beta.4`. Until the release
 operator confirms those exact versions are public, use the checked release
 artifacts. A successful local package test is not evidence of publication.
 
@@ -76,6 +76,11 @@ directory to make a new installation appear enrolled.
 Ask the agent to run `agentlogin_inventory`, then `agentlogin_enroll` for the
 configured `sentfrom` identity. The helper generates the private signing key
 locally and returns a public approval link and fingerprint.
+
+If the first result is still `starting`, wait for `agentlogin_enrollment_status`
+to include `fingerprint`. Ask the agent to show that entire value with its configured
+address. Resuming the saved request preserves the same key and fingerprint; no one
+needs to open the private keystore to obtain it.
 
 Open that link yourself. Compare the exact address, key name, and full fingerprint
 with the request your agent started. This agent-key fingerprint is different from

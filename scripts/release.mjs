@@ -10,7 +10,7 @@ import { inspectServer } from '../test/protocol-helper.mjs'
 const root = fileURLToPath(new URL('..', import.meta.url))
 export const registry = 'https://registry.npmjs.org/'
 const repository = 'git+https://github.com/sentfromai/sentfromai-mcp.git'
-const companionVersion = '0.2.0-beta.2'
+const companionVersion = '0.2.0-beta.4'
 const companionNames = ['agentlogin', '@agentlogin/mcp']
 const read = (path) => JSON.parse(readFileSync(path, 'utf8'))
 const hash = (bytes, algorithm = 'sha256', encoding = 'hex') => createHash(algorithm).update(bytes).digest(encoding)
