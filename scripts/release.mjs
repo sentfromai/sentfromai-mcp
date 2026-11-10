@@ -60,11 +60,13 @@ function inspect(path, pkg) {
   return files
 }
 
-async function lookup(name, version) {
-  const response = await fetch(`${registry}${encodeURIComponent(name)}/${version}`, { signal: AbortSignal.timeout(15_000) })
-  if (response.status === 404) return null
+export async function lookup(name, version, fetcher = fetch, signal = AbortSignal.timeout(15_000)) {
+  const response = await fetcher(`${registry}${encodeURIComponent(name)}/${version}`, { redirect: 'error', headers: {'cache-control': 'no-cache'}, signal })
+  if (response.status === 404) { await response.body?.cancel(); return null }
   assert.equal(response.status, 200, `Registry lookup failed for ${name}`)
-  return response.json()
+  const metadata = await response.json()
+  assert.ok(metadata && typeof metadata === 'object' && !Array.isArray(metadata), `Registry lookup failed for ${name}`)
+  return metadata
 }
 
 async function companions() {
@@ -142,18 +144,84 @@ export function validateDispatch(commit, githubSha) {
   assert.equal(commit, githubSha, 'npm provenance must identify the actual workflow dispatch SHA')
 }
 
-export async function reconcile(pkg, fetchVersion = lookup, checkTags = async (p) => {
-  const response = await fetch(`${registry}${p.name}`, { signal: AbortSignal.timeout(15_000) })
-  assert.equal(response.status, 200)
-  const metadata = await response.json()
-  assert.equal(metadata['dist-tags']?.beta, p.version)
-  assert.notEqual(metadata['dist-tags']?.latest, p.version)
-}) {
+function assertRegistryTagMap(p, tags) {
+  assert.ok(tags && typeof tags === 'object' && !Array.isArray(tags)
+    && Object.values(tags).every(value => typeof value === 'string' && value.length > 0), `Cannot read dist-tags for ${p.name}`)
+}
+
+export async function readRegistryTags(p, fetcher = fetch, signal = AbortSignal.timeout(15_000)) {
+  const response = await fetcher(`${registry}-/package/${encodeURIComponent(p.name)}/dist-tags`, { redirect: 'error', headers: {'cache-control': 'no-cache'}, signal })
+  if (response.status === 404) { await response.body?.cancel(); return null }
+  assert.equal(response.status, 200, `Cannot read dist-tags for ${p.name}`)
+  const tags = await response.json()
+  assertRegistryTagMap(p, tags)
+  return tags
+}
+
+export function validateRegistryTags(p, tags) {
+  assertRegistryTagMap(p, tags)
+  assert.equal(tags.beta, p.version, `${p.name} beta dist-tag does not identify this release`)
+  assert.notEqual(tags.latest, p.version, `${p.name} beta must not be the latest release`)
+}
+
+export async function reconcile(pkg, fetchVersion = lookup, checkTags = async p => validateRegistryTags(p, await readRegistryTags(p))) {
   const existing = await fetchVersion(pkg.name, pkg.version)
   if (!existing) return false
   assert.equal(existing.dist?.integrity, pkg.integrity, 'Published version has different bytes')
   await checkTags(pkg)
   return true
+}
+
+export async function preflight(pkg, fetchVersion = lookup, lookupTags = readRegistryTags) {
+  const tags = await lookupTags(pkg)
+  if (tags !== null) assertRegistryTagMap(pkg, tags)
+  const exists = await reconcile(pkg, fetchVersion, () => validateRegistryTags(pkg, tags))
+  if (!exists) {
+    assert.notEqual(tags?.beta, pkg.version, 'Version is pending registry visibility; reconcile before publishing')
+    assert.notEqual(tags?.latest, pkg.version, 'Version is pending registry visibility; reconcile before publishing')
+  }
+  return {exists, tags}
+}
+
+// npm can accept an upload before its public metadata and tags become visible.
+// This waits only after a successful upload; errors never trigger another upload.
+export async function publishAndVerify(p, previousTags, upload, {
+  lookup: readVersion = (pkg, signal) => lookup(pkg.name, pkg.version, fetch, signal),
+  lookupTags = (pkg, signal) => readRegistryTags(pkg, fetch, signal),
+  now = () => performance.now(), sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
+  timeoutMs = 300_000, pollIntervalMs = 10_000,
+} = {}) {
+  assert.ok(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 300_000);
+  assert.ok(Number.isSafeInteger(pollIntervalMs) && pollIntervalMs > 0);
+  if (previousTags !== null) assertRegistryTagMap(p, previousTags);
+  const previousBeta = previousTags?.beta, previousLatest = previousTags?.latest;
+  await upload();
+  const deadline = now() + timeoutMs;
+  const checkDeadline = () => assert.ok(now() < deadline, `${p.name} accepted upload remains unresolved; preserve the artifact and reconcile before any further publish`);
+  const readSignal = () => {
+    checkDeadline();
+    return AbortSignal.timeout(Math.max(1, Math.ceil(Math.min(15_000, deadline - now()))));
+  };
+  let betaObserved = false;
+  for (;;) {
+    const existing = await readVersion(p, readSignal());
+    if (existing !== null) assert.equal(existing?.dist?.integrity, p.integrity, `${p.name} already exists with different bytes`);
+    // Inspect tags even while the version is 404; never conceal a conflicting tag.
+    const tags = await lookupTags(p, readSignal());
+    if (tags !== null) {
+      assertRegistryTagMap(p, tags);
+      assert.equal(tags.latest, previousLatest, `${p.name} existing latest dist-tag changed`);
+      assert.ok(tags.beta === p.version || (!betaObserved && tags.beta === previousBeta), `${p.name} beta dist-tag changed`);
+      betaObserved ||= tags.beta === p.version;
+      if (existing !== null && tags.beta === p.version) {
+        checkDeadline();
+        validateRegistryTags(p, tags);
+        return true;
+      }
+    }
+    checkDeadline();
+    await sleep(Math.min(pollIntervalMs, deadline - now()));
+  }
 }
 
 async function prepare(out) {
@@ -213,11 +281,21 @@ async function publish(out) {
     const publicPackage = await lookup(peer.name, peer.version)
     assert.equal(publicPackage?.dist?.integrity, peer.integrity, `Publish the exact tested ${peer.name} first`)
   }
-  if (!await reconcile(p)) {
-    // Recheck immediately before publishing; a concurrent appearance still needs exact integrity.
-    if (!await reconcile(p)) run('npm', ['publish', join(out, p.filename), '--ignore-scripts', '--access', 'public', '--tag', 'beta', '--provenance', '--registry', registry], root, { stdio: 'inherit' })
+  const previous = await preflight(p)
+  const checkTags = async () => {
+    const tags = await readRegistryTags(p)
+    validateRegistryTags(p, tags)
+    assert.equal(tags.latest, previous.tags?.latest, 'Existing latest dist-tag changed')
   }
-  assert.ok(await reconcile(p), 'Publication must be confirmed by immutable bytes and tags')
+  if (!previous.exists) {
+    const current = await preflight(p)
+    if (current.tags !== null) {
+      assert.equal(current.tags.latest, previous.tags?.latest, 'Existing latest dist-tag changed')
+      assert.ok(current.tags.beta === p.version || current.tags.beta === previous.tags?.beta, 'Beta dist-tag changed')
+    }
+    if (!current.exists) await publishAndVerify(p, previous.tags, () => run('npm', ['publish', join(out, p.filename), '--ignore-scripts', '--access', 'public', '--tag', 'beta', '--provenance', '--registry', registry], root, { stdio: 'inherit' }))
+  }
+  assert.ok(await reconcile(p, lookup, checkTags), 'Publication must be confirmed by immutable bytes and tags')
   console.log(`Verified published ${p.name}@${p.version}`)
 }
 
