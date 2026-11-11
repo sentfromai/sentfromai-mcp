@@ -14,6 +14,7 @@ installation instructions below.
 [![npm](https://img.shields.io/npm/v/sentfromai-mcp)](https://www.npmjs.com/package/sentfromai-mcp)
 [![MCP registry](https://img.shields.io/badge/MCP_registry-ai.sentfrom%2Fmcp-2ea44f)](https://registry.modelcontextprotocol.io/v0/servers?search=ai.sentfrom)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![SentFromAI on StartupScores](https://startupscores.com/badge/sentfromai.svg?style=shield&v=combo&theme=dark)](https://startupscores.com/open-source/sentfromai)
 
 MCP server for [SentFromAI](https://sentfrom.ai) — email infrastructure for AI agents.
 
