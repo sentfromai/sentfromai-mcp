@@ -39,5 +39,5 @@
     ]
   },
   "mcpServers": "./mcp.json",
-  "skills": "./skills/"
+  "skills": ["./skills/sentfromai/"]
 }
