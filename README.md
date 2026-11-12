@@ -1,16 +1,5 @@
 # sentfromai-mcp
 
-This branch prepares `0.5.0-beta.3`. Use its pinned install commands only after the
-release operator confirms publication; a source checkout is not a published release.
-
-This candidate pairs with Agent Login `0.2.0-beta.4`, which reports the public
-agent-key fingerprint during enrollment and resume. Existing `0.5.0-beta.2`
-installations with their matching Agent Login beta.2 peer remain supported; upgrade
-the companion and its exact peers together after the new release is verified.
-Existing marketplace, Gemini, Cursor and server-directory defaults remain on the
-stable mail release. The beta companion is enabled explicitly through the local
-installation instructions below.
-
 [![npm](https://img.shields.io/npm/v/sentfromai-mcp)](https://www.npmjs.com/package/sentfromai-mcp)
 [![MCP registry](https://img.shields.io/badge/MCP_registry-ai.sentfrom%2Fmcp-2ea44f)](https://registry.modelcontextprotocol.io/v0/servers?search=ai.sentfrom)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -89,10 +78,11 @@ Cursor one-click (then paste your key into the generated config):
 
 ### Cursor and Grok Bot (plugin)
 
-Install **SentFromAI** from the Cursor Marketplace; Grok Bot lists the same plugin under
-Settings, Plugins. It connects to the hosted endpoint and asks for your API key on install.
-To try it before it is listed, copy this repo into `~/.cursor/plugins/local/sentfromai`
-and reload Cursor.
+A Cursor Marketplace listing for **SentFromAI** is pending. Once it is listed, install
+it from the Cursor Marketplace. Grok Bot lists the same plugin under Settings, Plugins.
+It connects to the hosted endpoint and asks for your API key on install. Until the
+listing is available, copy this repo into `~/.cursor/plugins/local/sentfromai` and
+reload Cursor.
 
 ### VS Code
 
@@ -209,6 +199,19 @@ policy: https://sentfrom.ai/privacy · terms: https://sentfrom.ai/terms.
 - [MCP guide](https://docs.sentfrom.ai/guides/mcp)
 - [API reference](https://docs.sentfrom.ai/api-reference/introduction)
 - [SentFromAI for agents](https://docs.sentfrom.ai/for-agents)
+
+## Beta and development
+
+This branch prepares `0.5.0-beta.3`. Use its pinned install commands only after the
+release operator confirms publication; a source checkout is not a published release.
+
+This candidate pairs with Agent Login `0.2.0-beta.4`, which reports the public
+agent-key fingerprint during enrollment and resume. Existing `0.5.0-beta.2`
+installations with their matching Agent Login beta.2 peer remain supported; upgrade
+the companion and its exact peers together after the new release is verified.
+Existing marketplace, Gemini, Cursor and server-directory defaults remain on the
+stable mail release. The beta companion is enabled explicitly through the local
+installation instructions below.
 
 ## Optional Agent Login companion
 
